@@ -1764,6 +1764,12 @@
                 };
                 this.dom.cancelLink.onclick = () => this.closeModal(this.dom.linkModal);
 
+                $$('.modal-overlay').forEach(modal => {
+                    modal.onclick = (e) => {
+                        if (e.target === modal) this.closeModal(modal);
+                    };
+                });
+
                 this.dom.exportBtn.onclick = () => this.exportConfig();
                 this.dom.importBtn.onchange = (e) => {
                     if (e.target.files.length > 0) {
