@@ -18,9 +18,10 @@
             --color-surface-hover: #252525;
             --color-border: #2a2a2a;
             --color-border-focus: #444;
-            --color-accent: #3a86ff;
-            --color-accent-hover: #5a99ff;
-            --color-danger: #ff4d4d;
+            --color-accent: #4361ee;
+            --color-accent-hover: #4895ef;
+            --color-danger: #e63946;
+            --color-danger-hover: #ff4d5d;
             --shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
             --font-main: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
             --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -819,16 +820,11 @@
                 background: var(--color-accent);
                 color: white;
                 width: 100%;
-                box-shadow: 0 4px 15px rgba(58, 134, 255, 0.3);
+                box-shadow: 0 4px 15px rgba(67, 97, 238, 0.2);
 
                 &:hover {
                     background: var(--color-accent-hover);
-                    transform: translateY(-2px);
-                    box-shadow: 0 6px 20px rgba(58, 134, 255, 0.4);
-                }
-
-                &:active {
-                    transform: translateY(0);
+                    box-shadow: 0 6px 20px rgba(67, 97, 238, 0.3);
                 }
             }
 
@@ -840,22 +836,29 @@
                     color: var(--color-text);
                     background: var(--color-surface-hover);
                 }
-
-                &:active {
-                    opacity: 0.8;
-                }
             }
 
             &.btn-danger {
                 background: var(--color-danger);
-                box-shadow: 0 4px 15px rgba(255, 77, 77, 0.3);
+                box-shadow: 0 4px 15px rgba(230, 57, 70, 0.2);
+
+                &:hover {
+                    background: var(--color-danger-hover);
+                    box-shadow: 0 6px 20px rgba(230, 57, 70, 0.3);
+                }
             }
 
             &.btn-reset {
                 width: 100%;
-                border: 1px solid var(--color-danger);
-                color: var(--color-danger);
+                border: 1px solid var(--color-border);
+                color: var(--color-text-muted);
                 margin-top: 30px;
+
+                &:hover {
+                    border-color: var(--color-danger);
+                    color: var(--color-danger);
+                    background: rgba(230, 57, 70, 0.05);
+                }
             }
         }
 
@@ -1155,8 +1158,8 @@
         <div class="modal text-center">
             <h2 class="text-danger mb-10">Reset to Defaults?</h2>
             <p class="text-muted mb-24 text-sm">
-                This will permanently delete all your custom engines, quick links, and settings. This action cannot be
-                undone.
+                This will permanently delete all your custom engines, quick links, and settings.<br><b>This action
+                    cannot be undone.</b>
             </p>
             <div class="form-actions">
                 <button class="btn btn-ghost flex-1" id="cancel-reset">Cancel</button>
