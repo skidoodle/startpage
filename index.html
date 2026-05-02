@@ -1041,6 +1041,17 @@
             </label>
         </div>
 
+        <div class="settings-group lock-group">
+            <div>
+                <h3 class="lock-title">New Tab</h3>
+                <span class="lock-desc">Open links in a new tab.</span>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" id="newtab-toggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+
         <div class="settings-group">
             <h3>Theme</h3>
             <div class="theme-toggle">
@@ -1283,6 +1294,7 @@
                     addCustBtn: $('#add-custom-engine'),
                     toastContainer: $('#toast-container'),
                     lockToggle: $('#lock-toggle'),
+                    newTabToggle: $('#newtab-toggle'),
                     resetBtn: $('#reset-btn'),
                     resetModal: $('#reset-modal'),
                     confirmResetBtn: $('#confirm-reset'),
@@ -1412,7 +1424,7 @@
             }
 
             loadSettings() {
-                const defaults = {theme: 'dark', engine: 'google', suggest: 'google', locked: true};
+                const defaults = {theme: 'dark', engine: 'google', suggest: 'google', locked: true, newTab: true};
                 const saved = localStorage.getItem('sp_settings');
                 return saved ? {...defaults, ...JSON.parse(saved)} : defaults;
             }
@@ -1420,6 +1432,7 @@
             saveSettings() {
                 localStorage.setItem('sp_settings', JSON.stringify(this.settings));
                 this.applySettings();
+                this.renderLinks();
             }
 
             loadCustomEngines() {
@@ -1441,6 +1454,7 @@
                 const isLocked = !!this.settings.locked;
                 this.dom.body.classList.toggle('is-locked', isLocked);
                 this.dom.lockToggle.checked = isLocked;
+                this.dom.newTabToggle.checked = !!this.settings.newTab;
 
                 this.dom.body.setAttribute('data-theme', this.settings.theme);
                 const engine = this.getEngine(this.settings.engine);
@@ -1478,7 +1492,12 @@
                 this.dom.linksGrid.innerHTML = '';
                 this.links.forEach((link, idx) => {
                     const item = document.createElement('a');
-                    item.className = 'link-item'; item.href = link.url;
+                    item.className = 'link-item';
+                    item.href = link.url;
+                    if (this.settings.newTab) {
+                        item.target = '_blank';
+                        item.rel = 'noopener noreferrer';
+                    }
                     item.setAttribute('tabindex', '0');
                     item.setAttribute('draggable', 'true');
                     item.dataset.index = idx;
@@ -1639,7 +1658,14 @@
                     e.preventDefault();
                     const q = this.dom.searchInput.value.trim();
                     const engine = this.getEngine(this.settings.engine);
-                    if (q && engine) window.location.href = engine.url.replace('%s', encodeURIComponent(q));
+                    if (q && engine) {
+                        const url = engine.url.replace('%s', encodeURIComponent(q));
+                        if (this.settings.newTab) {
+                            window.open(url, '_blank', 'noopener,noreferrer');
+                        } else {
+                            window.location.href = url;
+                        }
+                    }
                 };
 
                 this.dom.searchInput.oninput = () => {
@@ -1664,6 +1690,11 @@
 
                 this.dom.lockToggle.onchange = (e) => {
                     this.settings.locked = e.target.checked;
+                    this.saveSettings();
+                };
+
+                this.dom.newTabToggle.onchange = (e) => {
+                    this.settings.newTab = e.target.checked;
                     this.saveSettings();
                 };
 
