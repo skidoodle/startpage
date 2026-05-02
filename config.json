@@ -1,0 +1,31 @@
+{
+  "settings": {
+    "theme": "dark",
+    "engine": "google",
+    "suggest": "google",
+    "locked": true
+  },
+  "customEngines": {},
+  "links": [
+    {
+      "name": "GitHub",
+      "url": "https://github.com",
+      "icon": "github"
+    },
+    {
+      "name": "YouTube",
+      "url": "https://youtube.com",
+      "icon": "youtube"
+    },
+    {
+      "name": "Gmail",
+      "url": "https://gmail.com",
+      "icon": "gmail"
+    },
+    {
+      "name": "Reddit",
+      "url": "https://reddit.com",
+      "icon": "reddit"
+    }
+  ]
+}
