@@ -267,14 +267,8 @@
             }
 
             &.dragging {
-                opacity: 0.4;
-                transform: scale(0.95);
-                cursor: grabbing;
-            }
-
-            &.drag-over {
-                background: var(--color-surface-hover);
-                transform: scale(1.05);
+                opacity: 0.1;
+                transform: scale(0.9);
             }
         }
 
@@ -1523,37 +1517,67 @@
 
                     item.addEventListener('dragstart', (e) => {
                         if (this.settings.locked) {e.preventDefault(); return;}
-                        e.dataTransfer.setData('text/plain', idx);
-                        item.classList.add('dragging');
+                        this.draggingItem = item;
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', 'move');
+                        setTimeout(() => item.classList.add('dragging'), 0);
                     });
 
                     item.addEventListener('dragover', (e) => {
                         e.preventDefault();
-                        if (this.settings.locked) return;
-                        item.classList.add('drag-over');
-                    });
+                        if (this.settings.locked || !this.draggingItem || this.draggingItem === item || this.isSwapping) return;
 
-                    item.addEventListener('dragleave', () => {
-                        item.classList.remove('drag-over');
-                    });
+                        this.isSwapping = true;
+                        setTimeout(() => this.isSwapping = false, 150);
 
-                    item.addEventListener('dragend', () => {
-                        item.classList.remove('dragging');
-                    });
+                        const items = Array.from(this.dom.linksGrid.querySelectorAll('.link-item:not(.add-link-btn)'));
+                        const draggedIdx = items.indexOf(this.draggingItem);
+                        const targetIdx = items.indexOf(item);
 
-                    item.addEventListener('drop', (e) => {
-                        e.preventDefault();
-                        item.classList.remove('drag-over');
-                        if (this.settings.locked) return;
+                        const rects = new Map();
+                        items.forEach(el => rects.set(el, el.getBoundingClientRect()));
 
-                        const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
-                        const toIndex = idx;
-
-                        if (!isNaN(fromIndex) && fromIndex !== toIndex) {
-                            const movedLink = this.links.splice(fromIndex, 1)[0];
-                            this.links.splice(toIndex, 0, movedLink);
-                            this.saveLinks();
+                        if (draggedIdx < targetIdx) {
+                            item.after(this.draggingItem);
+                        } else {
+                            item.before(this.draggingItem);
                         }
+
+                        items.forEach(el => {
+                            if (el === this.draggingItem) return;
+                            const first = rects.get(el);
+                            const last = el.getBoundingClientRect();
+                            const dx = first.left - last.left;
+                            const dy = first.top - last.top;
+
+                            if (dx !== 0 || dy !== 0) {
+                                el.style.transform = `translate(${dx}px, ${dy}px)`;
+                                el.style.transition = 'none';
+
+                                requestAnimationFrame(() => {
+                                    el.style.transform = '';
+                                    el.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+
+                                    setTimeout(() => {
+                                        el.style.transition = '';
+                                    }, 300);
+                                });
+                            }
+                        });
+                    });
+                    item.addEventListener('dragend', () => {
+                        if (!this.draggingItem) return;
+                        this.draggingItem.classList.remove('dragging');
+                        this.draggingItem = null;
+
+                        const currentItems = Array.from(this.dom.linksGrid.querySelectorAll('.link-item:not(.add-link-btn)'));
+                        const newLinks = currentItems.map(el => {
+                            const originalIdx = parseInt(el.dataset.index);
+                            return this.links[originalIdx];
+                        });
+
+                        this.links = newLinks;
+                        this.saveLinks();
                     });
 
                     $('.remove-link', item).onclick = (e) => {
