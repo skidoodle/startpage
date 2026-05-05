@@ -1165,6 +1165,9 @@
     <script>
         const $ = (s, o = document) => o.querySelector(s);
         const $$ = (s, o = document) => Array.from(o.querySelectorAll(s));
+        const escapeHTML = (str) => String(str).replace(/[&<>'"]/g,
+            tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag)
+        );
 
         const ICON_BASE = 'https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/';
 
@@ -1343,7 +1346,7 @@
                         opt.className = 'custom-option';
                         opt.dataset.value = id;
 
-                        opt.innerHTML = `<span>${engine.name}</span>`;
+                        opt.innerHTML = `<span>${escapeHTML(engine.name)}</span>`;
                         if (!BUILTIN_ENGINES[id]) {
                             const delBtn = document.createElement('span');
                             delBtn.className = 'delete-engine-btn';
@@ -1423,7 +1426,12 @@
             loadSettings() {
                 const defaults = {theme: 'dark', engine: 'google', suggest: 'google', locked: true, newTab: true};
                 const saved = localStorage.getItem('sp_settings');
-                return saved ? {...defaults, ...JSON.parse(saved)} : defaults;
+                try {
+                    return saved ? {...defaults, ...JSON.parse(saved)} : defaults;
+                } catch (e) {
+                    console.error('Failed to parse settings', e);
+                    return defaults;
+                }
             }
 
             saveSettings() {
@@ -1434,7 +1442,12 @@
 
             loadCustomEngines() {
                 const saved = localStorage.getItem('sp_custom_engines');
-                return saved ? JSON.parse(saved) : {};
+                try {
+                    return saved ? JSON.parse(saved) : {};
+                } catch (e) {
+                    console.error('Failed to parse custom engines', e);
+                    return {};
+                }
             }
 
             saveCustomEngines() {
@@ -1472,12 +1485,18 @@
 
             loadLinks() {
                 const saved = localStorage.getItem('sp_links');
-                return saved ? JSON.parse(saved) : [
+                const defaults = [
                     {name: 'GitHub', url: 'https://github.com', icon: 'github'},
                     {name: 'YouTube', url: 'https://youtube.com', icon: 'youtube'},
                     {name: 'Gmail', url: 'https://gmail.com', icon: 'gmail'},
                     {name: 'Reddit', url: 'https://reddit.com', icon: 'reddit'}
                 ];
+                try {
+                    return saved ? JSON.parse(saved) : defaults;
+                } catch (e) {
+                    console.error('Failed to parse links', e);
+                    return defaults;
+                }
             }
 
             saveLinks() {
@@ -1499,10 +1518,13 @@
                     item.setAttribute('draggable', 'true');
                     item.dataset.index = idx;
 
-                    const iconSrc = this.resolveIcon(link.icon) || `https://www.google.com/s2/favicons?domain=${new URL(link.url).hostname}&sz=64`;
+                    let domain = '';
+                    try {domain = new URL(link.url).hostname;} catch (e) { }
+                    const iconSrc = this.resolveIcon(link.icon) || `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+
                     item.innerHTML = `
-                        <div class="link-icon"><img src="${iconSrc}" draggable="false"></div>
-                        <span class="link-title">${link.name}</span>
+                        <div class="link-icon"><img src="${escapeHTML(iconSrc)}" draggable="false"></div>
+                        <span class="link-title">${escapeHTML(link.name)}</span>
                         <div class="edit-link" data-index="${idx}" title="Edit Bookmark">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" />
@@ -1660,7 +1682,7 @@
                 const toast = document.createElement('div');
                 toast.className = `toast ${type}`;
                 toast.innerHTML = `
-                    <span>${msg}</span>
+                    <span>${escapeHTML(msg)}</span>
                     <div class="toast-timer"></div>
                 `;
 
@@ -1757,7 +1779,7 @@
                     const name = e.target.value.trim().toLowerCase();
                     if (name) {
                         const url = ICON_BASE + name + '.svg';
-                        this.dom.custIconPreview.innerHTML = `<img src="${url}" onerror="this.parentElement.innerHTML='<span>?</span>'">`;
+                        this.dom.custIconPreview.innerHTML = `<img src="${escapeHTML(url)}" onerror="this.parentElement.innerHTML='<span>?</span>'">`;
                         currentBase64 = url;
                     }
                 };
@@ -1766,7 +1788,7 @@
                     const reader = new FileReader();
                     reader.onload = () => {
                         currentBase64 = reader.result;
-                        this.dom.custIconPreview.innerHTML = `<img src="${currentBase64}">`;
+                        this.dom.custIconPreview.innerHTML = `<img src="${escapeHTML(currentBase64)}">`;
                         this.dom.custIconName.value = '';
                     };
                     reader.readAsDataURL(e.target.files[0]);
@@ -1867,7 +1889,18 @@
                     this.parseAndRenderSuggestions(data);
                 };
 
+                // Cancel previous JSONP request if pending
+                if (this.currentSuggestionScript) {
+                    this.currentSuggestionScript.remove();
+                    if (this.currentCallbackName) {
+                        delete window[this.currentCallbackName];
+                    }
+                }
+
+                this.currentCallbackName = callbackName;
                 const script = document.createElement('script');
+                this.currentSuggestionScript = script;
+
                 let url = suggestUrlBase;
 
                 if (url.includes('{callback}')) {
