@@ -1796,6 +1796,31 @@
                         this.showToast('Name and URL are required.', 'error');
                     }
                 };
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        const openModal = $('.modal-overlay.open');
+                        if (openModal) {
+                            this.closeModal(openModal);
+                        } else if (this.dom.drawer.classList.contains('open')) {
+                            this.dom.drawer.classList.remove('open');
+                        }
+                    }
+                });
+
+                document.addEventListener('click', (e) => {
+                    const isDrawerOpen = this.dom.drawer.classList.contains('open');
+                    const isModalOpen = $('.modal-overlay.open');
+
+                    if (isDrawerOpen && !isModalOpen) {
+                        const clickedDrawer = this.dom.drawer.contains(e.target);
+                        const clickedToggle = this.dom.openSettings.contains(e.target);
+
+                        if (!clickedDrawer && !clickedToggle) {
+                            this.dom.drawer.classList.remove('open');
+                        }
+                    }
+                });
             }
 
             fetchSuggestions() {
