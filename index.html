@@ -1598,7 +1598,9 @@
                         this.dom.linkName.value = link.name;
                         this.dom.linkUrl.value = link.url;
 
-                        if (link.icon && !link.icon.startsWith('data:') && !link.icon.startsWith('http')) {
+                        if (link.icon && typeof link.icon === 'string' && link.icon.startsWith(ICON_BASE)) {
+                            this.dom.linkIconName.value = link.icon.replace(ICON_BASE, '').replace('.svg', '');
+                        } else if (link.icon && !link.icon.startsWith('data:') && !link.icon.startsWith('http')) {
                             this.dom.linkIconName.value = link.icon;
                         } else {
                             this.dom.linkIconName.value = '';
@@ -1789,7 +1791,7 @@
                 this.dom.cancelLink.onclick = () => this.closeModal(this.dom.linkModal);
 
                 $$('.modal-overlay').forEach(modal => {
-                    modal.onclick = (e) => {
+                    modal.onmousedown = (e) => {
                         if (e.target === modal) this.closeModal(modal);
                     };
                 });
